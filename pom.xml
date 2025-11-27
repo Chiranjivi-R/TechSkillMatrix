@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -12,6 +12,7 @@
 
     <name>TechSkillMatrix</name>
 
+    <!-- Java 11 (Compatible with Tomcat 9 + MySQL 8.0.x) -->
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -20,7 +21,7 @@
 
     <dependencies>
 
-        <!-- Servlets (javax) -->
+        <!-- 🔹 Servlet API (Provided by Tomcat) -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -28,7 +29,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JSP (javax) -->
+        <!-- 🔹 JSP API -->
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>javax.servlet.jsp-api</artifactId>
@@ -36,19 +37,20 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JSTL -->
+        <!-- 🔹 JSTL (for <c:out>, <c:forEach> etc.) -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
             <version>1.2</version>
         </dependency>
 
-        <!-- MySQL Connector -->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>8.0.33</version>
-        </dependency>
+	        <!-- 🔥 MySQL Connector (Stable for JDBC) -->
+	       <dependency>
+	    <groupId>com.mysql</groupId>
+	    <artifactId>mysql-connector-j</artifactId>
+	    <version>8.0.33</version>
+	</dependency>
+
 
     </dependencies>
 
@@ -57,14 +59,14 @@
 
         <plugins>
 
-            <!-- Compiler -->
+            <!-- Compile Java -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
             </plugin>
 
-            <!-- WAR Plugin -->
+            <!-- Build WAR file -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -74,7 +76,7 @@
                 </configuration>
             </plugin>
 
-            <!-- 🔥 Fully disable test phase (no download, no execution) -->
+            <!-- Skip Tests Completely -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
