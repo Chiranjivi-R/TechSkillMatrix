@@ -1,15 +1,22 @@
-FROM tomcat:9.0-jdk11-temurin
+#################### 1) BUILD WAR ####################
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
 
-# Remove default ROOT app
+# Copy full project (source code only)
+COPY . .
+
+# Build WAR → output goes to /app/target/*.war
+RUN mvn -DskipTests=true package
+
+
+#################### 2) RUN IN TOMCAT ####################
+FROM tomcat:9.0-jdk17-temurin
+
+# Remove default webapps
 RUN rm -rf /usr/local/tomcat/webapps/ROOT*
 
-# Copy WAR
-COPY target/TechSkillMatrix.war /usr/local/tomcat/webapps/ROOT.war
-
-# Force Tomcat to unpack WAR & load app as ROOT
-ENV JAVA_OPTS="-Djava.awt.headless=true -Dfile.encoding=UTF-8 \
-              -Dorg.apache.catalina.startup.ExpandWar=true \
-              -Dorg.apache.catalina.startup.ContextConfig.jarsToSkip=NONE"
+# Copy generated WAR & deploy as ROOT
+COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
 
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
