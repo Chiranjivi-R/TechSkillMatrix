@@ -3,165 +3,139 @@
 <%@ page import="com.techskillmatrix.model.UserResults"%>
 
 <%
-    // Validate session
+    // Session validation
     if (session == null || session.getAttribute("userId") == null) {
         response.sendRedirect("index.jsp");
         return;
     }
 
-    Integer userId = (Integer) session.getAttribute("userId");
+    int userId = (int) session.getAttribute("userId");
     String userName = (String) session.getAttribute("userName");
 
     UserResults results = null;
     boolean hasScores = false;
-    String dashboardError = null;
 
     try {
         results = ResultsService.fetchUserResults(userId);
         hasScores = results != null && results.hasData();
-    } catch (Exception e) {
-        dashboardError = "❗ Unable to load score details.";
+    } catch(Exception e) {
+        hasScores = false;
     }
 %>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TechSkill Matrix - Dashboard</title>
+<title>Dashboard | TechSkill Matrix</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',sans-serif;background:#f5f5f5}
-
-.navbar{
-background:linear-gradient(135deg,#667eea,#764ba2);
-color:#fff;padding:15px 30px;display:flex;
-justify-content:space-between;align-items:center;
-box-shadow:0 2px 10px rgba(0,0,0,0.1)
+*{margin:0;padding:0;font-family:'Segoe UI';box-sizing:border-box}
+body{background:#f3f5ff}
+nav{
+ background:linear-gradient(135deg,#667eea,#764ba2);
+ padding:14px 30px;color:white;
+ display:flex;justify-content:space-between;align-items:center
 }
+nav h2{font-size:22px}
+nav .r a{color:white;padding:8px 14px;border-radius:5px;text-decoration:none}
+nav .r a:hover{background:rgba(255,255,255,.25)}
+.container{max-width:1150px;margin:30px auto;padding:10px}
 
-.navbar h1{font-size:1.5em}
-.navbar .user-info{display:flex;gap:18px}
-.navbar a{color:#fff;text-decoration:none;padding:8px 15px;border-radius:5px}
-.navbar a:hover{background:rgba(255,255,255,0.25)}
-
-.container{max-width:1200px;margin:30px auto;padding:0 20px}
-
-.welcome-card,.scores-card{
-background:#fff;border-radius:10px;padding:30px;margin-bottom:25px;
-box-shadow:0 2px 10px rgba(0,0,0,0.1)
-}
-
-.welcome-card h2{color:#667eea;margin-bottom:8px}
-
-.scores-card h3{color:#5b47c5;margin-bottom:12px}
-.scores-empty{color:#666;font-size:15px;margin-bottom:15px}
-
-.scores-table{
-width:100%;border-collapse:collapse;margin-top:10px
-}
-.scores-table th{background:#f4f1ff;color:#4a3c79;padding:12px;text-align:left}
-.scores-table td{padding:12px;border-bottom:1px solid #eee}
-
-.recommendation{
-background:#eef4ff;padding:15px;margin-top:15px;border-radius:10px;
-border-left:4px solid #4b6cff;color:#1f2c65;font-size:15px
-}
-
-.cards-grid{
-margin-top:25px;display:grid;
-grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px
-}
 .card{
-background:#fff;padding:25px;border-radius:10px;
-box-shadow:0 2px 10px rgba(0,0,0,0.1);
-transition:.3s
+ background:white;padding:24px;margin-bottom:18px;
+ border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08)
 }
-.card:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.18)}
-.card h3{color:#667eea;margin-bottom:10px}
-.card p{color:#666;margin-bottom:18px;line-height:1.5}
-.card-btn{
-background:linear-gradient(135deg,#667eea,#764ba2);
-color:#fff;text-decoration:none;padding:10px 20px;
-border-radius:6px;display:inline-block;transition:.2s
+
+.score-table{width:100%;margin-top:12px;border-collapse:collapse}
+.score-table th{background:#ece8ff;padding:10px;color:#423a75}
+.score-table td{padding:10px;border-bottom:1px solid #e3e3e3}
+
+.rec-box{
+ background:#eaf0ff;padding:15px;margin-top:15px;
+ border-radius:8px;border-left:4px solid #5270ff;font-size:15px
 }
-.card-btn:hover{transform:translateY(-2px)}
+
+.grid{
+ display:grid;gap:20px;margin-top:22px;
+ grid-template-columns:repeat(auto-fill,minmax(260px,1fr))
+}
+.box{
+ background:white;padding:20px;border-radius:10px;text-align:left;
+ box-shadow:0 2px 10px rgba(0,0,0,.1);transition:.25s
+}
+.box:hover{transform:translateY(-4px)}
+.box h3{color:#667eea;margin-bottom:8px}
+.box-btn{
+ background:linear-gradient(135deg,#667eea,#764ba2);
+ color:white;text-decoration:none;padding:8px 18px;border-radius:5px;
+ display:inline-block;margin-top:10px
+}
+.box-btn:hover{opacity:.9}
 </style>
 </head>
 
 <body>
 
-<nav class="navbar">
-    <h1>TechSkill Matrix</h1>
-    <div class="user-info">
-        <span>Welcome, <%= userName %> 👋</span>
+<nav>
+    <h2>TechSkill Matrix</h2>
+    <div class="r">
+        Welcome <b><%= userName %></b> 👋 &nbsp;
         <a href="LogoutServlet">Logout</a>
     </div>
 </nav>
 
 <div class="container">
 
-    <div class="welcome-card">
-        <h2>Your Dashboard</h2>
-        <p>View your scores & continue your growth assessments.</p>
+    <!-- Welcome Header -->
+    <div class="card">
+        <h2>Dashboard Overview</h2>
+        <p>Track your performance & explore test modules to improve skill mapping.</p>
     </div>
 
-    <div class="scores-card">
-        <h3>Your Skill Scores</h3>
+    <!-- Score Section -->
+    <div class="card">
+        <h3>Your Results Summary</h3>
 
-        <% if (dashboardError != null) { %>
-            <p class="scores-empty"><%= dashboardError %></p>
+        <% if(!hasScores){ %>
 
-        <% } else if (!hasScores) { %>
-            <p class="scores-empty">No test taken yet — attempt one to unlock your matrix.</p>
+            <p>No results found yet — take your first test now! 🚀</p>
 
         <% } else { %>
 
-            <table class="scores-table">
-                <tr><th>Aptitude</th><td><%= results.getAptitude() %></td></tr>
-                <tr><th>Logical Reasoning</th><td><%= results.getLogic() %></td></tr>
-                <tr><th>Technical</th><td><%= results.getTech() %></td></tr>
-                <tr><th>English</th><td><%= results.getEnglish() %></td></tr>
-            </table>
+        <table class="score-table">
+            <tr><th>Aptitude</th><td><%= results.getAptitude() %>%</td></tr>
+            <tr><th>Logical Reasoning</th><td><%= results.getLogic() %>%</td></tr>
+            <tr><th>Technical</th><td><%= results.getTech() %>%</td></tr>
+            <tr><th>English</th><td><%= results.getEnglish() %>%</td></tr>
+        </table>
 
-            <div class="recommendation">
-                <strong>Recommended Career Path →</strong><br>
-                <%= results.getRecommendation() == null || results.getRecommendation().isEmpty()
-                        ? "Take minimum one test to unlock insights."
-                        : results.getRecommendation() %>
-            </div>
+        <div class="rec-box">
+            <b>Recommended Career:</b><br>
+            <%= results.getRecommendation() != null ? results.getRecommendation() : "Take tests to reveal best suited career path" %>
+        </div>
 
         <% } %>
 
     </div>
 
-    <div class="cards-grid">
-        <div class="card">
-            <h3>📊 Aptitude</h3><p>Core quantitative & numerical thinking.</p>
-            <a class="card-btn" href="test.jsp?category=aptitude">Start Test</a>
-        </div>
+    <!-- Test/Navigation Cards -->
+    <div class="grid">
 
-        <div class="card">
-            <h3>🧠 Logical Reasoning</h3><p>Patterns, sequences & analytical logic.</p>
-            <a class="card-btn" href="test.jsp?category=logic">Start Test</a>
-        </div>
+        <div class="box"><h3>📊 Aptitude</h3><p>Numbers, reasoning & maths intelligence.</p>
+        <a href="test.jsp?category=aptitude" class="box-btn">Start Test</a></div>
 
-        <div class="card">
-            <h3>💻 Technical Knowledge</h3><p>Programming & computer science MCQs.</p>
-            <a class="card-btn" href="test.jsp?category=tech">Start Test</a>
-        </div>
+        <div class="box"><h3>🧠 Logic</h3><p>Puzzles, patterns & analytical thinking.</p>
+        <a href="test.jsp?category=logic" class="box-btn">Start Test</a></div>
 
-        <div class="card">
-            <h3>✍ English</h3><p>Grammar, comprehension & communication.</p>
-            <a class="card-btn" href="test.jsp?category=english">Start Test</a>
-        </div>
+        <div class="box"><h3>💻 Technical</h3><p>Programming & engineering concepts.</p>
+        <a href="test.jsp?category=tech" class="box-btn">Start Test</a></div>
 
-        <div class="card">
-            <h3>📄 View Result Summary</h3><p>Check past scores & improvement guidance.</p>
-            <a class="card-btn" href="result.jsp">Open Results</a>
-        </div>
+        <div class="box"><h3>✍ English</h3><p>Language structure & comprehension test.</p>
+        <a href="test.jsp?category=english" class="box-btn">Start Test</a></div>
+
+        <div class="box"><h3>📄 Summary</h3><p>Full report → skills + recommended field.</p>
+        <a href="result.jsp" class="box-btn">View Result</a></div>
+
     </div>
 </div>
 

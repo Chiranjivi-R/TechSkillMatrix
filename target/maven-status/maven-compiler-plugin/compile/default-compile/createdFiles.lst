@@ -2,8 +2,8 @@ com\techskillmatrix\servlets\SubmitTestServlet.class
 com\techskillmatrix\model\UserResults$Builder.class
 com\techskillmatrix\servlets\SignupServlet.class
 com\techskillmatrix\servlets\LoginServlet.class
+com\techskillmatrix\db\DBTest.class
 com\techskillmatrix\model\UserResults.class
-com\techskillmatrix\test\TestDB.class
 com\techskillmatrix\db\DatabaseConnection.class
 com\techskillmatrix\servlets\LogoutServlet.class
 com\techskillmatrix\db\ResultsService.class

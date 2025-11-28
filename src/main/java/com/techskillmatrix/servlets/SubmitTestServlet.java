@@ -1,12 +1,8 @@
 package com.techskillmatrix.servlets;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
@@ -14,138 +10,134 @@ import javax.servlet.http.*;
 import com.techskillmatrix.db.DatabaseConnection;
 import com.techskillmatrix.db.ResultsService;
 
-@WebServlet("/SubmitTestServlet")
+@WebServlet("/submit-test")   // final mapped URL
 public class SubmitTestServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
-        if(session == null || session.getAttribute("userId") == null){
-            response.sendRedirect("index.jsp");
+        // ------------------ SESSION CHECK ------------------
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userId") == null) {
+            resp.sendRedirect("index.jsp?sessionExpired=true");
             return;
         }
 
-        int userId = (Integer) session.getAttribute("userId");
-        String category = normalizeCategory(request.getParameter("category"));
-        String categoryColumn = getColumnName(category);
+        int userId = (int) session.getAttribute("userId");
+        String category = normalize(req.getParameter("category"));
+        String column = resolveColumn(category);
 
-        if(categoryColumn == null) categoryColumn = "aptitude";
-
-        String[] questionIdParams = request.getParameterValues("questionIds");
-        List<Integer> questionIds = parseQuestionIds(questionIdParams);
-
-        if(questionIds.isEmpty()){
-            response.sendRedirect("test.jsp?category=" + category + "&status=invalid");
+        // ------------------ FETCH QUESTION IDS ------------------
+        List<Integer> questionIds = extractIds(req.getParameterValues("questionIds"));
+        if (questionIds.isEmpty()) {
+            resp.sendRedirect("test.jsp?category=" + category + "&status=noQuestions");
             return;
         }
 
         Connection conn = null;
 
-        try{
+        try {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
 
-            Map<Integer,String> correctAnswers = loadCorrectAnswers(conn, questionIds);
+            // answer key from db
+            Map<Integer, String> answers = loadAnswerKey(conn, questionIds);
 
-            int correctCount = evaluateAnswers(request, correctAnswers);
-            int total = correctAnswers.size();
-            int score = total == 0 ? 0 : (int)Math.round((correctCount/(double)total)*100);
+            int total = answers.size();
+            int correct = evaluate(req, answers);
+            int score = (total == 0) ? 0 : (correct * 100 / total);
 
+            // store result
             ResultsService.ensureResultsRow(conn, userId);
-            ResultsService.updateCategoryScore(conn, userId, categoryColumn, score);
+            ResultsService.updateCategoryScore(conn, userId, column, score);
 
-            int[] updatedScores = ResultsService.fetchScores(conn, userId);
-
-            String recommendation = determineRecommendation(updatedScores);
-            if(recommendation == null) recommendation = "Needs more tests to analyze profile.";
-
+            int[] sc = ResultsService.fetchScores(conn, userId);
+            String recommendation = generateCareer(sc);
             ResultsService.updateRecommendation(conn, userId, recommendation);
+
             conn.commit();
 
-            request.setAttribute("category", toTitleCase(category));
-            request.setAttribute("score", score);
+            // send to result.jsp
+            req.setAttribute("category", capitalize(category));
+            req.setAttribute("score", score);
+            req.setAttribute("recommendation", recommendation);
 
-            forwardToResults(request,response);
+            req.getRequestDispatcher("result.jsp").forward(req, resp);
 
-        }catch(Exception e){
-            try{ if(conn!=null) conn.rollback(); }catch(SQLException ignored){}
-            request.setAttribute("errorMessage", "Test submit failed: "+e.getMessage());
-            request.getRequestDispatcher("test.jsp?category="+category).forward(request,response);
-        }
-        finally{
-            DatabaseConnection.closeConnection(conn);
+        } catch (Exception ex) {
+            try { if (conn != null) conn.rollback(); } catch (Exception ignore) {}
+            req.setAttribute("errorMessage", "Error submitting exam → " + ex.getMessage());
+            req.getRequestDispatcher("test.jsp?category=" + category).forward(req, resp);
+
+        } finally {
+            DatabaseConnection.close(conn);   // 🔥 Correct final fix
         }
     }
 
-    private List<Integer> parseQuestionIds(String[] list){
+    // =============================================================
+    // Utility Methods
+    // =============================================================
+
+    private List<Integer> extractIds(String[] raw) {
         List<Integer> ids = new ArrayList<>();
-        if(list!=null){
-            for(String id:list){
-                try{ ids.add(Integer.parseInt(id)); }catch(NumberFormatException ignored){}
-            }
-        }
+        if (raw != null)
+            for (String x : raw)
+                try { ids.add(Integer.parseInt(x)); } catch(Exception ignored){}
         return ids;
     }
 
-    private Map<Integer,String> loadCorrectAnswers(Connection conn,List<Integer> ids) throws SQLException{
+    private Map<Integer,String> loadAnswerKey(Connection conn, List<Integer> ids) throws SQLException {
         Map<Integer,String> map = new HashMap<>();
-        if(ids.isEmpty()) return map;
+        if (ids.isEmpty()) return map;
 
-        StringBuilder sql = new StringBuilder("SELECT id,correct_option FROM questions WHERE id IN(");
-        for(int i=0;i<ids.size();i++){ sql.append("?").append(i<ids.size()-1?",":""); }
-        sql.append(")");
+        String list = ids.toString().replace("[","").replace("]","");
 
-        PreparedStatement ps = conn.prepareStatement(sql.toString());
-        for(int i=0;i<ids.size();i++) ps.setInt(i+1,ids.get(i));
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT id,correct_option FROM questions WHERE id IN ("+list+")"
+        );
 
         ResultSet rs = ps.executeQuery();
-        while(rs.next()) map.put(rs.getInt("id"),rs.getString("correct_option"));
+        while (rs.next()) map.put(rs.getInt(1), rs.getString(2));
         return map;
     }
 
-    private int evaluateAnswers(HttpServletRequest req, Map<Integer,String> correct){
-        int count = 0;
-        for(Map.Entry<Integer,String> x: correct.entrySet()){
-            String ans = req.getParameter("q_"+x.getKey());
-            if(ans!=null && x.getValue()!=null && x.getValue().equalsIgnoreCase(ans)) count++;
+    private int evaluate(HttpServletRequest req, Map<Integer,String> key) {
+        int correct = 0;
+        for (int id : key.keySet()) {
+            String ans = req.getParameter("q_" + id);
+            if (ans != null && ans.equalsIgnoreCase(key.get(id)))
+                correct++;
         }
-        return count;
+        return correct;
     }
 
-    private String determineRecommendation(int[] s){
+    private String generateCareer(int[] s) {
         int max = Math.max(Math.max(s[0],s[1]),Math.max(s[2],s[3]));
+        if (max == 0) return "Complete more tests for proper evaluation";
 
-        if(max==0) return null;
-        if(s[2]==max) return "Software Developer / Backend Engineer";
-        if(s[1]==max) return "Data Analyst / Problem Solving Roles";
-        if(s[0]==max) return "Product & Quantitative Decision Roles";
-        return "Client Communication, HR & Coordination Jobs";
+        if (s[2] == max) return "Software Developer / Backend Engineer";
+        if (s[1] == max) return "Data Analyst & Logical Computing Roles";
+        if (s[0] == max) return "Product / Business Analyst & Quant Roles";
+        return "Communication / Client Facing / HR Roles";
     }
 
-    private void forwardToResults(HttpServletRequest req,HttpServletResponse resp)
-            throws ServletException, IOException{
-        req.getRequestDispatcher("result.jsp").forward(req,resp);
+    private String normalize(String s){
+        return (s==null)?"aptitude":s.toLowerCase().trim();
     }
 
-    private String normalizeCategory(String c){
-        return (c==null?"aptitude":c.trim().toLowerCase());
+    private String capitalize(String s){
+        return s.substring(0,1).toUpperCase() + s.substring(1);
     }
 
-    private String toTitleCase(String c){
-        return c.substring(0,1).toUpperCase()+c.substring(1);
-    }
-
-    private String getColumnName(String c){
+    private String resolveColumn(String c){
         switch(c){
-            case "aptitude":return "aptitude";
-            case "logic":return "logic";
-            case "tech":
-            case "technical":return "tech";
-            case "english":return "english";
+            case "logic": return "logic";
+            case "tech": 
+            case "technical": return "tech";
+            case "english": return "english";
+            default: return "aptitude";
         }
-        return null;
     }
 }
