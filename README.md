@@ -1,252 +1,92 @@
+🧠 TechSkill Matrix
 
-# TechSkill Matrix
+A Java-based Skill Assessment & Analytics Platform
+Built using JSP + Servlets + MySQL + Tomcat, designed to evaluate Aptitude, Logical Reasoning, Technical & English ability with automated scoring + career recommendations.
 
-A Java Web Application for tracking and assessing technical skills using JSP, Servlets, and MySQL.
+📌 Features
+Feature	Status
+User Signup + Login (Session Auth)	✔
+Random MCQ Test Generation	✔
+Score Evaluation & Storage	✔
+Dashboard Progress Overview	✔
+AI-Style Career Recommendation	✔
+Live Deployment on Railway	✔ Working
 
-## Project Structure
 
-```
-TechSkillMatrix/
-├── src/
-│   ├── com.techskillmatrix.servlets/     # All servlet files
-│   └── com.techskillmatrix.db/           # Database connection class
-├── WebContent/
-│   ├── index.jsp                         # Login page
-│   ├── signup.jsp                        # Registration page
-│   ├── dashboard.jsp                     # User dashboard
-│   ├── test.jsp                          # Skill assessment test
-│   └── result.jsp                         # Test results display
-├── WEB-INF/
-│   └── web.xml                           # Servlet mappings
-└── lib/                                  # MySQL connector JAR
-```
-
-## Prerequisites
-
-- Java JDK 8 or higher
-- Eclipse IDE for Enterprise Java and Web Developers
-- Apache Tomcat 9.0 or higher
-- MySQL Server 5.7 or higher
-- MySQL Connector/J (mysql-connector-java-8.0.x.jar)
-
-## Database Setup
-
-1. Create a MySQL database:
-```sql
-CREATE DATABASE techskillmatrix;
-USE techskillmatrix;
-```
-
-2. Create the required tables:
-```sql
--- Users table
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- User skills table
-CREATE TABLE user_skills (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    skill_name VARCHAR(100) NOT NULL,
-    score INT NOT NULL CHECK (score >= 0 AND score <= 100),
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_skill (user_id, skill_name)
-);
-```
-
-3. Update database credentials in `src/com/techskillmatrix/db/DatabaseConnection.java`:
-   - DB_URL: `jdbc:mysql://localhost:3306/techskillmatrix`
-   - DB_USERNAME: Your MySQL username (default: `root`)
-   - DB_PASSWORD: Your MySQL password
-
-## Eclipse Setup Instructions
-
-### Step 1: Import Project into Eclipse
-
-1. Open Eclipse IDE
-2. Go to **File** → **Import**
-3. Select **General** → **Existing Projects into Workspace**
-4. Click **Next**
-5. Browse to the `TechSkillMatrix` folder
-6. Ensure the project is checked
-7. Click **Finish**
-
-### Step 2: Convert to Dynamic Web Project
-
-1. Right-click on the project in Project Explorer
-2. Select **Properties**
-3. Go to **Project Facets**
-4. Check **Dynamic Web Module** (version 4.0 or higher)
-5. Check **Java** (version 1.8 or higher)
-6. Click **Apply and Close**
-
-### Step 3: Configure Build Path
-
-1. Right-click on the project → **Properties**
-2. Go to **Java Build Path** → **Source**
-3. Ensure `src` is listed as a source folder
-4. Go to **Libraries** tab
-5. Click **Add External JARs...**
-6. Navigate to and select `mysql-connector-java-8.0.x.jar` (download if needed)
-7. Click **OK**
-
-### Step 4: Add MySQL Connector to WebContent/lib
-
-1. Download MySQL Connector/J from: https://dev.mysql.com/downloads/connector/j/
-2. Copy `mysql-connector-java-8.0.x.jar` to `WebContent/WEB-INF/lib/` folder
-3. If `lib` folder doesn't exist, create it: `WebContent/WEB-INF/lib/`
-
-### Step 5: Configure Tomcat Server
-
-1. In Eclipse, go to **Window** → **Show View** → **Servers**
-2. Right-click in the Servers view → **New** → **Server**
-3. Select **Apache** → **Tomcat v9.0 Server** (or your version)
-4. Browse to your Tomcat installation directory
-5. Click **Next** → **Finish**
-
-### Step 6: Add Project to Tomcat
-
-1. Right-click on the Tomcat server in Servers view
-2. Select **Add and Remove...**
-3. Move `TechSkillMatrix` from Available to Configured
-4. Click **Finish**
-
-### Step 7: Run the Application
-
-1. Right-click on the Tomcat server
-2. Select **Start**
-3. Wait for server to start
-4. Open browser and navigate to: `http://localhost:8080/TechSkillMatrix/`
-
-## Features
-
-- **User Registration**: New users can create accounts
-- **User Login**: Secure authentication system
-- **Skill Assessment**: Take tests for various technical skills
-- **Results Tracking**: View and track skill scores over time
-- **Dashboard**: Centralized view of all features
-
-## Default Pages
-
-- **Login**: `http://localhost:8080/TechSkillMatrix/index.jsp`
-- **Signup**: `http://localhost:8080/TechSkillMatrix/signup.jsp`
-- **Dashboard**: `http://localhost:8080/TechSkillMatrix/dashboard.jsp`
-- **Test**: `http://localhost:8080/TechSkillMatrix/test.jsp`
-- **Results**: `http://localhost:8080/TechSkillMatrix/result.jsp`
-
-## Troubleshooting
-
-### Common Issues
-
-1. **ClassNotFoundException for MySQL Driver**
-   - Ensure `mysql-connector-java-8.0.x.jar` is in `WebContent/WEB-INF/lib/`
-   - Refresh the project in Eclipse
-   - Restart Tomcat server
-
-2. **Database Connection Error**
-   - Verify MySQL server is running
-   - Check database credentials in `DatabaseConnection.java`
-   - Ensure database and tables are created
-
-3. **404 Error on Pages**
-   - Verify project is added to Tomcat server
-   - Check `web.xml` servlet mappings
-   - Ensure `WebContent` folder structure is correct
-
-4. **Session Issues**
-   - Clear browser cookies
-   - Restart Tomcat server
-
-## Technology Stack
-
-- **Backend**: Java Servlets
-- **Frontend**: JSP (JavaServer Pages)
-- **Database**: MySQL with JDBC
-- **Server**: Apache Tomcat
-- **IDE**: Eclipse IDE
-
-## Notes
-
-- This project uses plain JSP and Servlets (no Spring Framework)
-- All servlet classes are in `com.techskillmatrix.servlets` package
-- Database connection utility is in `com.techskillmatrix.db` package
-- Session management is used for user authentication
-
-=======
-TechSkillMatrix
-
-TechSkillMatrix is a Java-based skill evaluation and management system built using JSP, Servlets, and MySQL. It enables users to record technical skills, track improvement, and maintain structured skill profiles. Admin users can manage categories, view reports, and analyze competency growth. The project follows MVC architecture for clean maintainability, scalability, and easy feature extension.
-
-🔥 Features
-Feature	Description
-User Registration & Login	Secure credentials and personal access
-Skill Profile Management	Add, update, or view technical strengths
-Admin Privileges	Category management, rating approval, user control
-MySQL Data Storage	Fast and persistent structured storage
-WAR Deployment	Runs on Tomcat with Maven build support
-Scalable Codebase	Extendable with dashboards, analytics & exports
-🛠 Tech Stack
-Component	Technology
-Frontend	JSP + HTML + CSS
-Backend	Java Servlets (MVC)
-Database	MySQL
-Server	Apache Tomcat
-Build Tool	Maven (WAR Packaging)
 📁 Project Structure
 TechSkillMatrix/
- ├─ src/main/java/         # Servlets + Logic
- ├─ src/main/webapp/       # JSP Pages, Assets
- │   ├─ WEB-INF/web.xml    # Routing & Config
- │   └─ index.jsp          # Main Page
- ├─ pom.xml                # Dependencies + Build
- └─ target/TechSkillMatrix.war
+├── src/main/java/com/techskillmatrix/
+│   ├── servlets/            # Signup, Login, Logout, Test, Result
+│   ├── db/                  # DB connection + ResultService
+│   └── model/               # Result Model (Builder)
+│
+├── src/main/webapp/
+│   ├── index.jsp            # Login Page
+│   ├── signup.jsp           # New user registration
+│   ├── dashboard.jsp        # Score Overview + Options
+│   ├── test.jsp             # Random exam (10 questions)
+│   ├── result.jsp           # Score + Recommendation output
+│   └── WEB-INF/web.xml      # Servlet Mappings
+│
+└── Dockerfile (if used)     # Deployment build
 
-⚙ Setup & Installation
-
-Install JDK 11+
-
-Install Apache Tomcat 9
-
-Create MySQL database:
-
+🛢 Database Setup
 CREATE DATABASE techskillmatrix;
+USE techskillmatrix;
+
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    password VARCHAR(255)
+);
+
+CREATE TABLE results (
+    student_id INT PRIMARY KEY,
+    aptitude INT DEFAULT 0,
+    logic INT DEFAULT 0,
+    tech INT DEFAULT 0,
+    english INT DEFAULT 0,
+    recommended_career VARCHAR(255),
+    FOREIGN KEY(student_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
 
-Update DB credentials in configuration servlet (if required)
+🔥 Table column fixed — student_it → student_id
 
-Build project:
-
+🔧 Installation Guide (Eclipse + Tomcat)
+Step	Action
+1	Import project → Eclipse
+2	Convert to Dynamic Web Project
+3	Add MySQL Connector jar to WEB-INF/lib
+4	Configure & Start Tomcat Server
+5	Create DB tables & update DB credentials
+6	Run app on browser → http://localhost:8080/TechSkillMatrix/
+🌐 Deployment (Railway / Docker)
 mvn clean package -DskipTests
 
 
-Deploy generated WAR:
+Generated WAR → /target/TechSkillMatrix.war
 
-/target/TechSkillMatrix.war → tomcat/webapps/
+Deploy manually OR auto-build using Docker:
+
+FROM tomcat:9.0-jdk11-temurin
+RUN rm -rf /usr/local/tomcat/webapps/ROOT*
+COPY target/TechSkillMatrix.war /usr/local/tomcat/webapps/ROOT.war
+CMD ["catalina.sh","run"]
 
 
-Start server & open:
-
-http://localhost:8080/TechSkillMatrix/
+Live Test URL (working):
+🔗 https://techskillmatrix-production.up.railway.app/
 
 🚀 Future Enhancements
-
-Analytics dashboard
-
-Skill gap detection & auto suggestions
-
-PDF/Excel export
-
-Role-based security
-
-REST API integration
-
+Idea	Impact
+Timer for test attempts	⏳ Improve challenge level
+Track previous attempt history	📊 Progress improvement view
+Admin Panel for adding questions	🛠 Fully dynamic platform
+PDF report export of results	📄 Great for job placements
+Graph-based score visualization	📈 Better analytics UI
 📜 License
 
-Open for learning, modification, and development.
-
+Free to use for learning, projects, portfolio, or skill development.
+Contributions & improvements are always welcome 🤝
