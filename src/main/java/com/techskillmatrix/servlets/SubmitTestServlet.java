@@ -18,7 +18,7 @@ public class SubmitTestServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // 🔐 Session validation
+        // 🔐 Check login session
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
             resp.sendRedirect("index.jsp?sessionExpired=true");
@@ -29,10 +29,10 @@ public class SubmitTestServlet extends HttpServlet {
         String category = normalize(req.getParameter("category"));
         String column = resolveColumn(category);
 
-        // 📌 Fetch submitted question ID list
+        // 📌 Read submitted question IDs
         List<Integer> questionIds = extractIds(req.getParameterValues("questionIds"));
         if (questionIds.isEmpty()) {
-            resp.sendRedirect("test.jsp?category=" + category + "&status=noQuestions");
+            resp.sendRedirect("dashboard.jsp?error=noQuestionsSubmitted");
             return;
         }
 
@@ -42,48 +42,46 @@ public class SubmitTestServlet extends HttpServlet {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
 
-            // 📥 real answers from DB
+            // GET correct answers from DB
             Map<Integer, String> answerKey = getCorrectAnswers(conn, questionIds);
 
-            // 🧮 evaluate score
+            // Evaluate score
             int total = answerKey.size();
             int correct = calculateCorrect(req, answerKey);
-            int score = (total == 0) ? 0 : (correct * 100 / total);
+            int score = total == 0 ? 0 : (correct * 100 / total);
 
-            // 💾 store in DB
+            // Update DB results
             ResultsService.ensureResultsRow(conn, userId);
             ResultsService.updateCategoryScore(conn, userId, column, score);
 
-            int[] scores = ResultsService.fetchScores(conn, userId);
-            String recommendation = generateCareer(scores);
+            int[] allScores = ResultsService.fetchScores(conn, userId);
+            String recommendation = generateCareer(allScores);
             ResultsService.updateRecommendation(conn, userId, recommendation);
 
             conn.commit();
 
-            // ↪ Forward to result.jsp (not test.jsp anymore — FIXED)
-            req.setAttribute("category", category.substring(0,1).toUpperCase()+category.substring(1));
+            // Redirect to result.jsp ✔ (NOT BACK to test.jsp)
+            req.setAttribute("category", capitalize(category));
             req.setAttribute("score", score);
             req.setAttribute("recommendation", recommendation);
-
             req.getRequestDispatcher("result.jsp").forward(req, resp);
 
-        } catch (Exception ex) {
-            try { if (conn!=null) conn.rollback(); } catch (Exception ignore) {}
-            req.setAttribute("errorMessage", "Submission failed: " + ex.getMessage());
-            req.getRequestDispatcher("dashboard.jsp").forward(req, resp); // FIX: no more returning to test.jsp
-
+        } catch (Exception e) {
+            try { if (conn != null) conn.rollback(); } catch (Exception ignored) {}
+            req.setAttribute("error", "Error while submitting: " + e.getMessage());
+            req.getRequestDispatcher("dashboard.jsp").forward(req, resp); // SAFE fallback page
         } finally {
             DatabaseConnection.close(conn);
         }
     }
 
-    // ------------------------------ Helper Methods ------------------------------
+    // ----------------------- Utility Methods -----------------------
 
     private List<Integer> extractIds(String[] raw) {
         List<Integer> list = new ArrayList<>();
         if (raw != null) {
-            for (String s : raw) {
-                try { list.add(Integer.parseInt(s)); } catch (Exception ignore) {}
+            for (String id : raw) {
+                try { list.add(Integer.parseInt(id)); } catch (Exception ignore) {}
             }
         }
         return list;
@@ -101,36 +99,43 @@ public class SubmitTestServlet extends HttpServlet {
         ResultSet rs = ps.executeQuery();
         while (rs.next())
             map.put(rs.getInt("id"), rs.getString("correct_option"));
+
         return map;
     }
 
     private int calculateCorrect(HttpServletRequest req, Map<Integer,String> key) {
-        int count = 0;
+        int correct = 0;
         for (int id : key.keySet()) {
             String ans = req.getParameter("q_" + id);
-            if (ans != null && ans.equalsIgnoreCase(key.get(id))) count++;
+            if (ans != null && ans.equalsIgnoreCase(key.get(id)))
+                correct++;
         }
-        return count;
+        return correct;
     }
 
     private String generateCareer(int[] s) {
-        int max = Math.max(Math.max(s[0],s[1]),Math.max(s[2],s[3]));
-        if (max == 0) return "Take more tests for accurate prediction.";
+        int max = Math.max(Math.max(s[0], s[1]), Math.max(s[2], s[3]));
+        if (max == 0) return "Take more tests for better evaluation.";
 
-        if (s[2]==max) return "Software Developer / Backend Engineer";
-        if (s[1]==max) return "Data Analyst / Logical Computing Roles";
-        if (s[0]==max) return "Business Analyst / Quantitative Roles";
+        if (s[2] == max) return "Software Developer / Backend Engineer";
+        if (s[1] == max) return "Data Analyst / Logical Problem Solving Roles";
+        if (s[0] == max) return "Business Analyst / Quantitative Roles";
         return "Communication / HR / Client Management Roles";
     }
 
-    private String normalize(String s) {
-        return (s==null)?"aptitude":s.trim().toLowerCase();
+    private String normalize(String s){
+        return (s == null) ? "aptitude" : s.toLowerCase().trim();
     }
 
+    private String capitalize(String c){
+        return c.substring(0,1).toUpperCase() + c.substring(1);
+    }
+
+    // ⭐ FINAL CORRECT version — only ONE method
     private String resolveColumn(String c) {
-        if (c.equals("logic")) return "logic";
-        if (c.equals("tech") || c.equals("technical")) return "tech";
-        if (c.equals("english")) return "english";
-        return "aptitude"; // default
+        return c.equals("logic") ? "logic" :
+               (c.equals("tech") || c.equals("technical")) ? "tech" :
+               c.equals("english") ? "english" :
+               "aptitude";
     }
 }
