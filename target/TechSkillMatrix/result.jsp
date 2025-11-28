@@ -132,8 +132,8 @@ th{background:#eef1ff;color:#4a52d1;font-weight:bold;}
         <a href="dashboard.jsp">Dashboard</a>
         <!-- always send a default category -->
         <a href="test.jsp?category=aptitude">Take Test</a>
-        <!-- must match @WebServlet("/LogoutServlet") -->
-        <a href="LogoutServlet">Logout</a>
+        <!-- must match @WebServlet("/Logout") -->
+        <a href="logout">Logout</a>
     </div>
 </nav>
 

@@ -65,7 +65,7 @@ input:focus{border-color:#667eea;outline:none}
 
     <!-- 🔥 FIXED form submission URL -->
     <form action="login" method="post">
-        <div class="form-group">
+                                      <div class="form-group">
             <label>Email</label>
             <input type="email" name="email" required autocomplete="off">
         </div>

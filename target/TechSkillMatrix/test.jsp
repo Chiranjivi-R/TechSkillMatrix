@@ -63,7 +63,7 @@
     <h2>TechSkill Matrix</h2>
     <div>
         <a href="dashboard.jsp">Dashboard</a>
-        <a href="LogoutServlet">Logout</a>
+        <a href="logout">Logout</a>
     </div>
 </nav>
 

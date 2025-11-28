@@ -79,9 +79,10 @@ nav .r a:hover{background:rgba(255,255,255,.25)}
 <nav>
     <h2>TechSkill Matrix</h2>
     <div class="r">
-        Welcome <b><%= userName %></b> 👋 &nbsp;
-        <a href="LogoutServlet">Logout</a>
-    </div>
+    Welcome <b><%= userName %></b> 👋 &nbsp;
+    <a href="logout">Logout</a>
+	</div>
+
 </nav>
 
 <div class="container">
